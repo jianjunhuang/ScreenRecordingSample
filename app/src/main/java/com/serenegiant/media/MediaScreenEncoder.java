@@ -50,7 +50,7 @@ public class MediaScreenEncoder extends MediaVideoEncoderBase {
 
 	private MediaProjection mMediaProjection;
     private final int mDensity;
-    private final int bitrate, fps;
+    private final int bitrate, fps, iFrameInterval;
     private Surface mSurface;
     private final Handler mHandler;
 	private final boolean mFrameInterpolation;
@@ -60,13 +60,14 @@ public class MediaScreenEncoder extends MediaVideoEncoderBase {
 
 	public MediaScreenEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener,
 		final MediaProjection projection, final int width, final int height, final int density,
-		final int _bitrate, final int _fps, final boolean frameInterpolation) {
+		final int _bitrate, final int _fps, final int iFrameInterval, final boolean frameInterpolation) {
 
 		super(muxer, listener, width, height);
 		mMediaProjection = projection;
 		mDensity = density;
 		fps = (_fps > 0 && _fps <= 30) ? _fps : FRAME_RATE;
 		bitrate = (_bitrate > 0) ? _bitrate : calcBitRate(_fps);
+		this.iFrameInterval = iFrameInterval;
 		mFrameInterpolation = frameInterpolation;
 		final HandlerThread thread = new HandlerThread(TAG);
 		thread.start();
@@ -82,7 +83,7 @@ public class MediaScreenEncoder extends MediaVideoEncoderBase {
 	@Override
 	void prepare() throws IOException {
 		if (DEBUG) Log.i(TAG, "prepare: ");
-		mSurface = prepare_surface_encoder(MIME_TYPE, fps, bitrate);
+		mSurface = prepare_surface_encoder(MIME_TYPE, fps, bitrate, iFrameInterval);
         mMediaCodec.start();
         mIsRecording = true;
         new Thread(mScreenCaptureTask, "ScreenCaptureThread").start();

@@ -183,6 +183,7 @@ public class ScreenRecorderService extends Service {
                                     metrics.densityDpi,
                                     videoConfig.getBits(),
                                     videoConfig.getFps(),
+                                    videoConfig.getIFrameInterval(),
                                     videoConfig.getFrameInterpolation());
                         }
                         if (true) {

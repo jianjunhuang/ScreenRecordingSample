@@ -55,17 +55,17 @@ public abstract class MediaVideoEncoderBase extends MediaEncoder {
 	 * @param bitrate
 	 * @return
 	 */
-	protected MediaFormat create_encoder_format(final String mime, final int frame_rate, final int bitrate) {
+	protected MediaFormat create_encoder_format(final String mime, final int frame_rate, final int bitrate, final int iFrameInterval) {
 		if (DEBUG) Log.v(TAG, String.format("create_encoder_format:(%d,%d),mime=%s,frame_rate=%d,bitrate=%d", mWidth, mHeight, mime, frame_rate, bitrate));
         final MediaFormat format = MediaFormat.createVideoFormat(mime, mWidth, mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);	// API >= 18
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate > 0 ? bitrate : calcBitRate(frame_rate));
         format.setInteger(MediaFormat.KEY_FRAME_RATE, frame_rate);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, iFrameInterval);
 		return format;
 	}
 
-	protected Surface prepare_surface_encoder(final String mime, final int frame_rate, final int bitrate)
+	protected Surface prepare_surface_encoder(final String mime, final int frame_rate, final int bitrate, final int iFrameInterval)
 		throws IOException, IllegalArgumentException {
 
 		if (DEBUG) Log.v(TAG, String.format("prepare_surface_encoder:(%d,%d),mime=%s,frame_rate=%d,bitrate=%d", mWidth, mHeight, mime, frame_rate, bitrate));
@@ -79,7 +79,7 @@ public abstract class MediaVideoEncoderBase extends MediaEncoder {
         }
 		if (DEBUG) Log.i(TAG, "selected codec: " + videoCodecInfo.getName());
 
-        final MediaFormat format = create_encoder_format(mime, frame_rate, bitrate);
+        final MediaFormat format = create_encoder_format(mime, frame_rate, bitrate, iFrameInterval);
 		if (DEBUG) Log.i(TAG, "format: " + format);
 
         mMediaCodec = MediaCodec.createEncoderByType(mime);
