@@ -37,11 +37,13 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.RadioButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.serenegiant.dialog.MessageDialogFragment;
 import com.serenegiant.media.VideoConfig;
@@ -71,6 +73,14 @@ public final class MainActivity extends AppCompatActivity
     private CheckBox mFPSInterpolation;
     private MyBroadcastReceiver mReceiver;
 
+    private TextView mStopwatchView;
+    private TextView mPauseView;
+    private Stopwatch mStopwatch = new Stopwatch(time -> {
+        mStopwatchView.post(() -> {
+            mStopwatchView.setText("" + (time / 1000.0));
+        });
+    });
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +94,8 @@ public final class MainActivity extends AppCompatActivity
         mIFrameIntervalEditText = findViewById(R.id.edt_i_frame_interval);
         mBitsEditText = findViewById(R.id.edt_bits);
         mFPSInterpolation = findViewById(R.id.radio_fps_interpolation);
+        mStopwatchView = findViewById(R.id.tv_stopwatch);
+        mPauseView = findViewById(R.id.tv_pause);
         updateRecording(false, false);
         if (mReceiver == null) {
             mReceiver = new MyBroadcastReceiver(this);
@@ -105,6 +117,12 @@ public final class MainActivity extends AppCompatActivity
         if (DEBUG) Log.v(TAG, "onPause:");
         unregisterReceiver(mReceiver);
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mStopwatch.release();
     }
 
     @Override
@@ -190,6 +208,14 @@ public final class MainActivity extends AppCompatActivity
         mRecordButton.setOnCheckedChangeListener(null);
         mPauseButton.setOnCheckedChangeListener(null);
         try {
+            if (isRecording) {
+                mStopwatch.start();
+            } else {
+                mStopwatch.stop();
+            }
+            if (isPausing) {
+                mPauseView.append(mStopwatch.getTime()/1000.0 + "\n");
+            }
             mRecordButton.setChecked(isRecording);
             mPauseButton.setEnabled(isRecording);
             mPauseButton.setChecked(isPausing);

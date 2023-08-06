@@ -130,8 +130,10 @@ public class ScreenRecorderService extends Service {
             }
         } else if (ACTION_PAUSE.equals(action)) {
             pauseScreenRecord();
+            updateStatus();
         } else if (ACTION_RESUME.equals(action)) {
             resumeScreenRecord();
+            updateStatus();
         }
         return result;
     }
