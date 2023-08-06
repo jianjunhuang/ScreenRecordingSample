@@ -60,7 +60,7 @@ class DesEditText : LinearLayout {
         if (TextUtils.isEmpty(text)) {
             return editText.hint?.toString() ?: ""
         }
-        return ""
+        return text?: ""
     }
 
 }
