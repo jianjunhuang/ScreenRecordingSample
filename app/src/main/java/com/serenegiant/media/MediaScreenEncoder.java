@@ -41,7 +41,7 @@ import com.serenegiant.glutils.GLDrawer2D;
 import java.io.IOException;
 
 public class MediaScreenEncoder extends MediaVideoEncoderBase {
-	private static final boolean DEBUG = false;	// TODO set false on release
+	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = MediaScreenEncoder.class.getSimpleName();
 
 	private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
@@ -53,16 +53,21 @@ public class MediaScreenEncoder extends MediaVideoEncoderBase {
     private final int bitrate, fps;
     private Surface mSurface;
     private final Handler mHandler;
+	private final boolean mFrameInterpolation;
+
+	private long mLastWaitEndNanoTime;
+	private long mLastDrawTime;
 
 	public MediaScreenEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener,
 		final MediaProjection projection, final int width, final int height, final int density,
-		final int _bitrate, final int _fps) {
+		final int _bitrate, final int _fps, final boolean frameInterpolation) {
 
 		super(muxer, listener, width, height);
 		mMediaProjection = projection;
 		mDensity = density;
 		fps = (_fps > 0 && _fps <= 30) ? _fps : FRAME_RATE;
 		bitrate = (_bitrate > 0) ? _bitrate : calcBitRate(_fps);
+		mFrameInterpolation = frameInterpolation;
 		final HandlerThread thread = new HandlerThread(TAG);
 		thread.start();
 		mHandler = new Handler(thread.getLooper());
@@ -206,21 +211,56 @@ public class MediaScreenEncoder extends MediaVideoEncoderBase {
 			@Override
 			public void run() {
 //				if (DEBUG) Log.v(TAG, "draw:");
-				boolean local_request_draw;
+				boolean localRequestDraw;
 				synchronized (mSync) {
-					local_request_draw = requestDraw;
+					localRequestDraw = requestDraw;
 					if (!requestDraw) {
 						try {
-							mSync.wait(intervals);
-							local_request_draw = requestDraw;
+							long start = System.nanoTime();
+							//根据上次等待时长，计算下次等待时长
+							long waitTime = intervals - (start - mLastWaitEndNanoTime) / 1000000L;
+							if (DEBUG) Log.v(TAG, "start wait: internal-" + waitTime);
+							if (waitTime < 0 || waitTime > intervals) {
+								waitTime = intervals;
+							}
+							if (DEBUG) Log.v(TAG, "start wait: internal-" + waitTime);
+							mSync.wait(waitTime);
+							long current = System.nanoTime();
+							long realIntervals = (current - start) / 1000000L;
+							long lastIntervals = (current - mLastDrawTime) / 1000000L;
+							mLastWaitEndNanoTime = current;
+							if (DEBUG)
+								Log.v(TAG, "end wait: realIntervals->" + realIntervals + " -> " + requestDraw);
+							localRequestDraw = requestDraw;
 							requestDraw = false;
+							boolean validateFrame = (waitTime <= realIntervals);
+							//间隔过大，触发绘制
+							if (mFrameInterpolation && !validateFrame && mLastDrawTime != 0 && lastIntervals >= intervals) {
+								if (DEBUG) Log.v(TAG, "end wait: 补帧 lastInterval-" + lastIntervals);
+								validateFrame = true;
+								//重置 lastWaitTime 确保下次间隔时长计算正确
+								mLastWaitEndNanoTime = 0;
+							}
+							if (validateFrame) {
+								mLastDrawTime = System.nanoTime();
+								//有效帧保证下面绘制
+								localRequestDraw = true;
+							}
+							if (DEBUG) Log.v(TAG, "end wait: validateFrame-" + validateFrame + ", request draw: "+localRequestDraw);
+							if (!validateFrame) {
+								//开始下一次绘制逻辑
+								queueEvent(this);
+								return;
+							}
 						} catch (final InterruptedException e) {
 							return;
 						}
+					} else {
+						requestDraw = false;
 					}
 				}
 				if (mIsRecording) {
-					if (local_request_draw) {
+					if (localRequestDraw) {
 						mSourceTexture.updateTexImage();
 						mSourceTexture.getTransformMatrix(mTexMatrix);
 					}

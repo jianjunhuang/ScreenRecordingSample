@@ -56,7 +56,7 @@ import com.serenegiant.utils.BuildCheck;
 import com.serenegiant.utils.FileUtils;
 
 public class ScreenRecorderService extends Service {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "ScreenRecorderService";
     private static final String APP_DIR_NAME = "ScreenRecorder";
 
@@ -177,7 +177,13 @@ public class ScreenRecorderService extends Service {
                             if (DEBUG) Log.i(TAG, "Video Config -> " + videoConfig);
                             // for screen capturing
                             new MediaScreenEncoder(sMuxer, mMediaEncoderListener,
-                                    projection, videoConfig.getWidth(), videoConfig.getHeight(), metrics.densityDpi, videoConfig.getBits(), videoConfig.getFps());
+                                    projection,
+                                    videoConfig.getWidth(),
+                                    videoConfig.getHeight(),
+                                    metrics.densityDpi,
+                                    videoConfig.getBits(),
+                                    videoConfig.getFps(),
+                                    videoConfig.getFrameInterpolation());
                         }
                         if (true) {
                             // for audio capturing

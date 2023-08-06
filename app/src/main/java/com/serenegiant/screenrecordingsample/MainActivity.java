@@ -33,8 +33,10 @@ import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.RadioButton;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -66,6 +68,7 @@ public final class MainActivity extends AppCompatActivity
     private DesEditText mFPSEditText;
     private DesEditText mIFrameIntervalEditText;
     private DesEditText mBitsEditText;
+    private CheckBox mFPSInterpolation;
     private MyBroadcastReceiver mReceiver;
 
     @Override
@@ -80,6 +83,7 @@ public final class MainActivity extends AppCompatActivity
         mFPSEditText = findViewById(R.id.edt_fps);
         mIFrameIntervalEditText = findViewById(R.id.edt_i_frame_interval);
         mBitsEditText = findViewById(R.id.edt_bits);
+        mFPSInterpolation = findViewById(R.id.radio_fps_interpolation);
         updateRecording(false, false);
         if (mReceiver == null) {
             mReceiver = new MyBroadcastReceiver(this);
@@ -173,7 +177,8 @@ public final class MainActivity extends AppCompatActivity
                 Integer.parseInt(mHeightEditText.getText()),
                 Integer.parseInt(mFPSEditText.getText()),
                 Integer.parseInt(mIFrameIntervalEditText.getText()),
-                Integer.parseInt(mBitsEditText.getText())
+                Integer.parseInt(mBitsEditText.getText()),
+                mFPSInterpolation.isChecked()
         ));
         intent.putExtras(data);
         startService(intent);
