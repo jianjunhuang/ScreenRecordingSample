@@ -1,4 +1,7 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
 
 android {
     compileSdkVersion versionCompiler
@@ -27,6 +30,8 @@ android {
 
 dependencies {
 	implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 	implementation("com.serenegiant:common:${commonLibVersion}") {
    		exclude module: 'support-v4'
    	}
