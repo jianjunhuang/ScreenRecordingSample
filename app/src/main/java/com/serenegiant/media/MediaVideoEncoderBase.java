@@ -186,4 +186,8 @@ public abstract class MediaVideoEncoderBase extends MediaEncoder {
 		mIsEOS = true;
 	}
 
+	@Override
+	protected boolean isVideoEncoder() {
+		return true;
+	}
 }

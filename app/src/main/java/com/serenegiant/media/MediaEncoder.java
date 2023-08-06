@@ -84,6 +84,7 @@ public abstract class MediaEncoder implements Runnable {
     protected final MediaEncoderListener mListener;
 
 	protected volatile boolean mRequestPause;
+	protected volatile boolean mWaitKeyFrame;
 	private long mLastPausedTimeUs;
 
     public MediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener) {
@@ -229,6 +230,9 @@ public abstract class MediaEncoder implements Runnable {
 			if (mLastPausedTimeUs != 0) {
 				offsetPTSUs += (System.nanoTime() / 1000 - mLastPausedTimeUs);
 				mLastPausedTimeUs = 0;
+			}
+			if (isVideoEncoder()) {
+				mWaitKeyFrame = true;
 			}
 			mRequestPause = false;
 			mSync.notifyAll();
@@ -393,7 +397,12 @@ LOOP:	while (mIsCapturing) {
                         throw new RuntimeException("drain:muxer hasn't started");
                     }
                     // write encoded data to muxer(need to adjust presentationTimeUs.
-					if (!mRequestPause) {
+					if (mWaitKeyFrame) {
+						if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
+							mWaitKeyFrame = false;
+						}
+					}
+					if (!mRequestPause && !mWaitKeyFrame) {
 	                   	mBufferInfo.presentationTimeUs = getPTSUs();
 	                   	muxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
 						prevOutputPTSUs = mBufferInfo.presentationTimeUs;
@@ -410,7 +419,11 @@ LOOP:	while (mIsCapturing) {
         }
     }
 
-    /**
+	protected boolean isVideoEncoder() {
+		return false;
+	}
+
+	/**
      * previous presentationTimeUs for writing
      */
 	private long prevOutputPTSUs = 0;
