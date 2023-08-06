@@ -57,7 +57,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="1080"
+                android:hint="1280"
                 android:inputType="number"
                 app:title="height" />
         </LinearLayout>
