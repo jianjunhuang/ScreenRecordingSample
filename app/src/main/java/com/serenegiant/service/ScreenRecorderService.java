@@ -36,9 +36,11 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.IBinder;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -47,6 +49,7 @@ import com.serenegiant.media.MediaAudioEncoder;
 import com.serenegiant.media.MediaEncoder;
 import com.serenegiant.media.MediaMuxerWrapper;
 import com.serenegiant.media.MediaScreenEncoder;
+import com.serenegiant.media.VideoConfig;
 import com.serenegiant.screenrecordingsample.MainActivity;
 import com.serenegiant.screenrecordingsample.R;
 import com.serenegiant.utils.BuildCheck;
@@ -69,6 +72,8 @@ public class ScreenRecorderService extends Service {
     public static final String ACTION_QUERY_STATUS = BASE + "ACTION_QUERY_STATUS";
     public static final String ACTION_QUERY_STATUS_RESULT = BASE + "ACTION_QUERY_STATUS_RESULT";
     public static final String EXTRA_RESULT_CODE = BASE + "EXTRA_RESULT_CODE";
+
+    public static final String EXTRA_VIDEO_CONFIG = BASE + "VIDEO_CONFIG";
     public static final String EXTRA_QUERY_RESULT_RECORDING = BASE + "EXTRA_QUERY_RESULT_RECORDING";
     public static final String EXTRA_QUERY_RESULT_PAUSING = BASE + "EXTRA_QUERY_RESULT_PAUSING";
     private static final int NOTIFICATION = R.string.app_name;
@@ -158,35 +163,21 @@ public class ScreenRecorderService extends Service {
         synchronized (sSync) {
             if (sMuxer == null) {
                 final int resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0);
+                VideoConfig videoConfig = intent.getParcelableExtra(EXTRA_VIDEO_CONFIG);
+                if (videoConfig == null) {
+                    videoConfig = VideoConfig.DEFAULT;
+                }
                 // get MediaProjection
                 final MediaProjection projection = mMediaProjectionManager.getMediaProjection(resultCode, intent);
                 if (projection != null) {
                     final DisplayMetrics metrics = getResources().getDisplayMetrics();
-                    int width = metrics.widthPixels;
-                    int height = metrics.heightPixels;
-                    if (width > height) {
-                        // 横長
-                        final float scale_x = width / 1920f;
-                        final float scale_y = height / 1080f;
-                        final float scale = Math.max(scale_x, scale_y);
-                        width = (int) (width / scale);
-                        height = (int) (height / scale);
-                    } else {
-                        // 縦長
-                        final float scale_x = width / 1080f;
-                        final float scale_y = height / 1920f;
-                        final float scale = Math.max(scale_x, scale_y);
-                        width = (int) (width / scale);
-                        height = (int) (height / scale);
-                    }
-                    if (DEBUG)
-                        Log.v(TAG, String.format("startRecording:(%d,%d)(%d,%d)", metrics.widthPixels, metrics.heightPixels, width, height));
                     try {
                         sMuxer = new MediaMuxerWrapper(this, ".mp4");    // if you record audio only, ".m4a" is also OK.
                         if (true) {
+                            if (DEBUG) Log.i(TAG, "Video Config -> " + videoConfig);
                             // for screen capturing
                             new MediaScreenEncoder(sMuxer, mMediaEncoderListener,
-                                    projection, width, height, metrics.densityDpi, 800 * 1024, 15);
+                                    projection, videoConfig.getWidth(), videoConfig.getHeight(), metrics.densityDpi, videoConfig.getBits(), videoConfig.getFps());
                         }
                         if (true) {
                             // for audio capturing
