@@ -7,7 +7,9 @@ class Stopwatch(private val listener: UpdateListener) : Runnable {
     @Volatile
     private var start = 0L
     private var thread = Thread(this)
-    private var isStart = false
+    var isStart = false
+        private set
+
     private var isInit = true
 
     init {

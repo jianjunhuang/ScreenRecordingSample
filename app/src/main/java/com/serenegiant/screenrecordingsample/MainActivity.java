@@ -25,13 +25,20 @@ package com.serenegiant.screenrecordingsample;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -53,6 +60,8 @@ import com.serenegiant.utils.PermissionCheck;
 import com.serenegiant.view.DesEditText;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class MainActivity extends AppCompatActivity
         implements MessageDialogFragment.MessageDialogListener {
@@ -162,6 +171,11 @@ public final class MainActivity extends AppCompatActivity
                         } finally {
                             mRecordButton.setOnCheckedChangeListener(mOnCheckedChangeListener);
                         }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Uri uri = Uri.parse("package:" + getPackageName());
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri);
+                            startActivity(intent);
+                        }
                     }
                     break;
                 case R.id.pause_button:
@@ -209,12 +223,13 @@ public final class MainActivity extends AppCompatActivity
         mPauseButton.setOnCheckedChangeListener(null);
         try {
             if (isRecording) {
-                mStopwatch.start();
+                if (!mStopwatch.isStart())
+                    mStopwatch.start();
             } else {
                 mStopwatch.stop();
             }
             if (isPausing) {
-                mPauseView.append(mStopwatch.getTime()/1000.0 + "\n");
+                mPauseView.append(mStopwatch.getTime() / 1000.0 + "\n");
             }
             mRecordButton.setChecked(isRecording);
             mPauseButton.setEnabled(isRecording);
@@ -362,6 +377,9 @@ public final class MainActivity extends AppCompatActivity
      * @return true this app has permission
      */
     protected boolean checkPermissionWriteExternalStorage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) return true;
+        }
         if (!PermissionCheck.hasWriteExternalStorage(this)) {
             MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
                     R.string.permission_title, R.string.permission_ext_storage_request,

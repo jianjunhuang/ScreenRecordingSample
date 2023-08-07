@@ -269,7 +269,7 @@ public class ScreenRecorderService extends Service {
         }
         // Set the info for the views that show in the notification panel.
         final Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.ic_launcher)  // the status icon
+                .setSmallIcon(R.mipmap.ic_launcher_round)  // the status icon
                 .setTicker(text)  // the status text
                 .setWhen(System.currentTimeMillis())  // the time stamp
                 .setContentTitle(getText(R.string.app_name))  // the label of the entry

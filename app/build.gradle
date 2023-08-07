@@ -14,7 +14,7 @@ android {
    	}
 
     defaultConfig {
-        applicationId "com.serenegiant.screenrecordingsample"
+        applicationId "com.serenegiant.screenrecordingsample.fork"
         minSdkVersion 21
         targetSdkVersion versionTarget
         versionCode versionCodeNum
